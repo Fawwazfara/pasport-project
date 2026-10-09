@@ -20,7 +20,8 @@ pipeline {
         }
         stage('Build Binary') {
             steps {
-                sh 'go build -o app .'
+                sh 'CGO_ENABLED=0 go build -o app ./cmd/server'
+                archiveArtifacts artifacts: 'app'
             }
         }
     }
