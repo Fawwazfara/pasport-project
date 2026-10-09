@@ -1,4 +1,230 @@
 document.addEventListener('DOMContentLoaded', function () {
+
+	/* ---------- utilitas bersama ---------- */
+
+	function setError(id, msg, ok) {
+		var el = document.getElementById(id);
+		if (!el) return;
+		el.textContent = msg || '';
+		el.style.display = msg ? 'block' : 'none';
+		el.classList.toggle('ok', !!ok);
+	}
+
+	function clearErrors(ids) {
+		ids.forEach(function (id) {
+			setError(id, '');
+		});
+	}
+
+	function setLoading(btn, text) {
+		if (text) {
+			btn.disabled = true;
+			btn.textContent = text;
+		} else {
+			btn.disabled = false;
+			btn.textContent = btn.dataset.label;
+		}
+	}
+
+	function formatRupiah(n) {
+		return 'Rp ' + n.toLocaleString('id-ID');
+	}
+
+	function apiFetch(url, options) {
+		return fetch(url, options).then(function (res) {
+			return res
+				.json()
+				.catch(function () {
+					return {};
+				})
+				.then(function (data) {
+					if (!res.ok) throw new Error(data.error || 'Terjadi kesalahan');
+					return data;
+				});
+		});
+	}
+
+	/* ---------- auth ---------- */
+
+	var authMain = document.getElementById('authMain');
+	var appMain = document.getElementById('appMain');
+	var userArea = document.getElementById('userArea');
+	var userName = document.getElementById('userName');
+	var authViews = ['loginView', 'registerView', 'resetView'].map(function (id) {
+		return document.getElementById(id);
+	});
+
+	function showAuth(viewId) {
+		authMain.hidden = false;
+		appMain.hidden = true;
+		userArea.hidden = true;
+		authViews.forEach(function (v) {
+			v.classList.toggle('active', v.id === viewId);
+		});
+		window.scrollTo(0, 0);
+	}
+
+	function showApp(user) {
+		authMain.hidden = true;
+		appMain.hidden = false;
+		userArea.hidden = false;
+		userName.textContent = user.nama || user.username;
+		window.scrollTo(0, 0);
+	}
+
+	document.querySelectorAll('[data-goto]').forEach(function (btn) {
+		btn.addEventListener('click', function () {
+			showAuth(btn.dataset.goto);
+		});
+	});
+
+	var loginBtn = document.getElementById('loginBtn');
+	loginBtn.dataset.label = loginBtn.textContent;
+	document.getElementById('loginForm').addEventListener('submit', function (e) {
+		e.preventDefault();
+		clearErrors(['loginUsernameError', 'loginPasswordError', 'loginError']);
+
+		var username = document.getElementById('loginUsername').value.trim();
+		var password = document.getElementById('loginPassword').value;
+
+		var ok = true;
+		if (!username) {
+			setError('loginUsernameError', 'Username wajib diisi');
+			ok = false;
+		}
+		if (!password) {
+			setError('loginPasswordError', 'Kata sandi wajib diisi');
+			ok = false;
+		}
+		if (!ok) return;
+
+		setLoading(loginBtn, 'Memproses...');
+		apiFetch('/api/auth/login', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ username: username, password: password })
+		})
+			.then(function (user) {
+				document.getElementById('loginForm').reset();
+				showApp(user);
+			})
+			.catch(function (err) {
+				setError('loginError', err.message);
+			})
+			.finally(function () {
+				setLoading(loginBtn, null);
+			});
+	});
+
+	var registerBtn = document.getElementById('registerBtn');
+	registerBtn.dataset.label = registerBtn.textContent;
+	document.getElementById('registerForm').addEventListener('submit', function (e) {
+		e.preventDefault();
+		clearErrors([
+			'registerNamaError',
+			'registerUsernameError',
+			'registerPasswordError',
+			'registerConfirmError',
+			'registerError'
+		]);
+
+		var nama = document.getElementById('registerNama').value.trim();
+		var username = document.getElementById('registerUsername').value.trim();
+		var password = document.getElementById('registerPassword').value;
+		var confirm = document.getElementById('registerConfirm').value;
+
+		var ok = true;
+		if (!nama) {
+			setError('registerNamaError', 'Nama lengkap wajib diisi');
+			ok = false;
+		}
+		if (!/^[a-zA-Z0-9._-]{3,32}$/.test(username)) {
+			setError('registerUsernameError', 'Username 3-32 karakter (huruf, angka, . _ -)');
+			ok = false;
+		}
+		if (password.length < 8) {
+			setError('registerPasswordError', 'Kata sandi minimal 8 karakter');
+			ok = false;
+		}
+		if (confirm !== password) {
+			setError('registerConfirmError', 'Ulangi kata sandi dengan benar');
+			ok = false;
+		}
+		if (!ok) return;
+
+		setLoading(registerBtn, 'Memproses...');
+		apiFetch('/api/auth/register', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ username: username, nama: nama, password: password })
+		})
+			.then(function (user) {
+				document.getElementById('registerForm').reset();
+				showApp(user);
+			})
+			.catch(function (err) {
+				setError('registerError', err.message);
+			})
+			.finally(function () {
+				setLoading(registerBtn, null);
+			});
+	});
+
+	var resetBtn = document.getElementById('resetBtn');
+	resetBtn.dataset.label = resetBtn.textContent;
+	document.getElementById('resetForm').addEventListener('submit', function (e) {
+		e.preventDefault();
+		clearErrors(['resetUsernameError', 'resetPasswordError', 'resetConfirmError', 'resetError']);
+
+		var username = document.getElementById('resetUsername').value.trim();
+		var password = document.getElementById('resetPassword').value;
+		var confirm = document.getElementById('resetConfirm').value;
+
+		var ok = true;
+		if (!username) {
+			setError('resetUsernameError', 'Username wajib diisi');
+			ok = false;
+		}
+		if (password.length < 8) {
+			setError('resetPasswordError', 'Kata sandi baru minimal 8 karakter');
+			ok = false;
+		}
+		if (confirm !== password) {
+			setError('resetConfirmError', 'Ulangi kata sandi dengan benar');
+			ok = false;
+		}
+		if (!ok) return;
+
+		setLoading(resetBtn, 'Menyimpan...');
+		apiFetch('/api/auth/reset', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ username: username, password: password })
+		})
+			.then(function () {
+				document.getElementById('resetForm').reset();
+				document.getElementById('loginUsername').value = username;
+				showAuth('loginView');
+				setError('loginError', 'Kata sandi berhasil diubah. Silakan masuk kembali.', true);
+			})
+			.catch(function (err) {
+				setError('resetError', err.message);
+			})
+			.finally(function () {
+				setLoading(resetBtn, null);
+			});
+	});
+
+	document.getElementById('logoutBtn').addEventListener('click', function () {
+		apiFetch('/api/auth/logout', { method: 'POST' })
+			.catch(function () {})
+			.finally(function () {
+				showAuth('loginView');
+			});
+	});
+
+	/* ---------- wizard reservasi ---------- */
+
 	var steps = [1, 2, 3, 4].map(function (n) {
 		return document.getElementById('step' + n);
 	});
@@ -32,33 +258,6 @@ document.addEventListener('DOMContentLoaded', function () {
 			li.classList.toggle('done', i + 1 < n);
 		});
 		window.scrollTo(0, 0);
-	}
-
-	function setError(id, msg) {
-		var el = document.getElementById(id);
-		if (!el) return;
-		el.textContent = msg || '';
-		el.style.display = msg ? 'block' : 'none';
-	}
-
-	function clearErrors(ids) {
-		ids.forEach(function (id) {
-			setError(id, '');
-		});
-	}
-
-	function setLoading(btn, text) {
-		if (text) {
-			btn.disabled = true;
-			btn.textContent = text;
-		} else {
-			btn.disabled = false;
-			btn.textContent = btn.dataset.label;
-		}
-	}
-
-	function formatRupiah(n) {
-		return 'Rp ' + n.toLocaleString('id-ID');
 	}
 
 	function setQuota(state, text) {
@@ -309,4 +508,12 @@ document.addEventListener('DOMContentLoaded', function () {
 	}
 
 	showStep(1);
+
+	apiFetch('/api/auth/me')
+		.then(function (user) {
+			showApp(user);
+		})
+		.catch(function () {
+			showAuth('loginView');
+		});
 });

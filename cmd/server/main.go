@@ -12,19 +12,24 @@ import (
 	"strings"
 	"time"
 
+	"passport/internal/auth"
 	"passport/internal/file_storage"
 	"passport/internal/model"
 	"passport/internal/quota_repository"
+	"passport/internal/user_repository"
 	"passport/web"
 )
 
 const (
 	envQuotaBackend   = "QUOTA_BACKEND"
 	envStorageBackend = "STORAGE_BACKEND"
+	envUserBackend    = "USER_BACKEND"
 	envInitialQuotas  = "INITIAL_QUOTAS"
 	envStorageDir     = "STORAGE_DIR"
 	defaultQuotas     = "Bandung:50,Jakarta Selatan:50,Surabaya:50,Yogyakarta:50"
 	maxFileSize       = 2 * 1024 * 1024
+	demoUsername      = "demo"
+	demoPassword      = "demo12345"
 )
 
 var jenisPassportBiaya = map[string]float64{
@@ -90,8 +95,10 @@ func parseQuotas(s string) map[string]int {
 }
 
 type server struct {
-	repo  quota_repository.QuotaRepository
-	store file_storage.FileStorage
+	repo     quota_repository.QuotaRepository
+	store    file_storage.FileStorage
+	users    user_repository.UserRepository
+	sessions *auth.SessionStore
 }
 
 func (s *server) kuota(w http.ResponseWriter, r *http.Request) {
@@ -299,6 +306,27 @@ func newFileStore(dir string) file_storage.FileStorage {
 	}
 }
 
+func newUserRepo() user_repository.UserRepository {
+	switch os.Getenv(envUserBackend) {
+	case "", "inmemory":
+		return user_repository.NewUserRepository()
+	default:
+		log.Fatalf("%s tidak dikenal: %s (tersedia: inmemory)", envUserBackend, os.Getenv(envUserBackend))
+		return nil
+	}
+}
+
+func seedDemoUser(repo user_repository.UserRepository) {
+	hash, err := auth.HashPassword(demoPassword)
+	if err != nil {
+		log.Printf("gagal menyiapkan akun demo: %v", err)
+		return
+	}
+	if _, err := repo.Create(demoUsername, "Pengguna Demo", hash); err != nil && !errors.Is(err, user_repository.ErrUsernameTaken) {
+		log.Printf("gagal menyiapkan akun demo: %v", err)
+	}
+}
+
 func main() {
 	quotasStr := os.Getenv(envInitialQuotas)
 	if quotasStr == "" {
@@ -316,15 +344,25 @@ func main() {
 		port = "8080"
 	}
 
+	users := newUserRepo()
+	seedDemoUser(users)
+
 	s := &server{
-		repo:  newQuotaRepo(initialQuotas),
-		store: newFileStore(storageDir),
+		repo:     newQuotaRepo(initialQuotas),
+		store:    newFileStore(storageDir),
+		users:    users,
+		sessions: auth.NewSessionStore(),
 	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/kuota", s.kuota)
 	mux.HandleFunc("/api/reservasi", s.reservasi)
 	mux.HandleFunc("/api/upload", s.upload)
+	mux.HandleFunc("/api/auth/register", s.authRegister)
+	mux.HandleFunc("/api/auth/login", s.authLogin)
+	mux.HandleFunc("/api/auth/logout", s.authLogout)
+	mux.HandleFunc("/api/auth/me", s.authMe)
+	mux.HandleFunc("/api/auth/reset", s.authReset)
 	mux.HandleFunc("/health", s.health)
 
 	static := http.FileServer(http.FS(web.Files))

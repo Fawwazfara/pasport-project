@@ -27,7 +27,21 @@ REST API-nya**; UI web hanya pelengkap untuk memperagakan alur.
 | GET    | `/health`        | Health check.                                                     |
 
 Semua error berformat konsisten `{"error": "pesan"}` dengan status code yang tepat
-(400 validasi, 404 tidak ditemukan, 405 method salah, 409 kuota habis, 500 internal).
+(400 validasi, 401 belum masuk, 404 tidak ditemukan, 405 method salah, 409 konflik/kuota
+habis, 500 internal).
+
+Tiga endpoint inti di atas adalah yang diuji saat load testing (JMeter). Untuk kebutuhan
+UI login, tersedia endpoint autentikasi berikut (tidak wajib untuk pengujian performa):
+
+| Method | Path                 | Keterangan                                            |
+| ------ | -------------------- | ----------------------------------------------------- |
+| POST   | `/api/auth/register` | Daftar akun. Body: `username`, `nama`, `password`.    |
+| POST   | `/api/auth/login`    | Masuk. Body: `username`, `password`. Set cookie sesi. |
+| POST   | `/api/auth/logout`   | Keluar, hapus sesi.                                   |
+| GET    | `/api/auth/me`       | Info pengguna aktif (401 jika belum masuk).           |
+| POST   | `/api/auth/reset`    | Atur ulang kata sandi. Body: `username`, `password`.  |
+
+Akun demo otomatis tersedia: **username `demo`, kata sandi `demo12345`**.
 
 ### Aturan domain (biaya)
 
@@ -50,6 +64,9 @@ Logika endpoint tidak bergantung pada implementasi penyimpanan. Dua interface di
 - `internal/file_storage` — `FileStorage` (`Save`). `Save` mengembalikan metadata hasil simpan
   (`SavedFile`: nama, ukuran, content type). Implementasi saat ini: **disk lokal**, nama file
   diacak (hex 16 byte), bukan dari input pengguna.
+- `internal/user_repository` — `UserRepository` (`Create`, `FindByUsername`, `UpdatePassword`).
+  Implementasi saat ini: **in-memory** (dilindungi `sync.RWMutex`).
+- `internal/auth` — hashing kata sandi (bcrypt) dan penyimpanan sesi in-memory (cookie).
 
 Pemilihan implementasi lewat environment variable, jadi penggantian ke DynamoDB/Firestore/
 Cosmos DB dan S3/GCS/Blob cukup menambah implementasi baru tanpa mengubah handler.
@@ -70,6 +87,7 @@ web/                      # index.html, app.js, style.css (di-embed)
 | `STORAGE_DIR`     | `./storage`                                                     | Direktori penyimpanan file.      |
 | `QUOTA_BACKEND`   | `inmemory`                                                      | Backend kuota (saat ini hanya ini). |
 | `STORAGE_BACKEND` | `local`                                                         | Backend file (saat ini hanya ini).  |
+| `USER_BACKEND`    | `inmemory`                                                      | Backend pengguna (saat ini hanya ini). |
 | `INITIAL_QUOTAS`  | `Bandung:50,Jakarta Selatan:50,Surabaya:50,Yogyakarta:50`       | Kuota awal per kantor per tanggal, format `Kantor:Jumlah,...`. |
 
 ## Menjalankan
@@ -95,11 +113,13 @@ Buka `http://localhost:8080`.
 
 ## UI
 
-Satu halaman wizard 4 langkah berbahasa Indonesia (pilih kantor & jadwal → data pemohon →
-unggah dokumen → ringkasan). Kuota ditampilkan tanpa reload, error validasi muncul di bawah
-field, tombol menampilkan status loading, dan ada tombol cetak ringkasan. Tampilan netral
-ala layanan pemerintah dengan satu warna aksen, tetap ada label "Prototype penelitian,
-bukan layanan resmi". Aset (`index.html`, `style.css`, `app.js`) di-embed ke binary.
+Sebelum masuk ke alur permohonan, pengguna melihat layar **Masuk**, **Daftar Akun**, dan
+**Atur Ulang Kata Sandi**. Setelah masuk, muncul wizard 4 langkah berbahasa Indonesia
+(pilih kantor & jadwal → data pemohon → unggah dokumen → ringkasan). Kuota ditampilkan tanpa
+reload, error validasi muncul di bawah field, tombol menampilkan status loading, dan ada
+tombol cetak ringkasan. Tampilan netral ala layanan pemerintah dengan satu warna aksen, tetap
+ada label "Prototype penelitian, bukan layanan resmi". Aset (`index.html`, `style.css`,
+`app.js`) di-embed ke binary.
 
 ## Contoh curl
 
@@ -175,13 +195,17 @@ Untuk kemudahan build dan latihan Jenkins tersedia:
   isi file diperiksa dan bukan hanya ekstensi.
 - Atomicity kuota dijamin dalam satu proses (mutex). Jika nanti dijalankan multi-instance,
   jaminan harus disediakan oleh backend terdistribusi (mis. conditional write DynamoDB).
+- Autentikasi memakai sesi in-memory + bcrypt. Akun hilang saat server di-restart. Atur ulang
+  kata sandi langsung mengganti sandi tanpa verifikasi email/token (prototype).
+- UI mewajibkan login sebelum mengajukan reservasi, tetapi **tiga endpoint inti tetap terbuka**
+  (tanpa autentikasi) agar load testing JMeter tidak terpengaruh.
 
 ## Yang sengaja belum dikerjakan
 
 - Integrasi pembayaran nyata (kode billing hanya dummy).
-- Persistensi kuota & metadata reservasi ke database (DynamoDB/Firestore/Cosmos DB).
+- Persistensi kuota, pengguna & metadata reservasi ke database (DynamoDB/Firestore/Cosmos DB).
 - Implementasi penyimpanan file ke object storage (S3/GCS/Blob) — interface sudah siap.
-- Autentikasi/login dan halaman admin.
+- Halaman admin, verifikasi email/pengiriman surel untuk reset sandi, dan multi-peran (role).
 - Verifikasi `kode_booking` saat unggah, pemindaian antivirus, dan deduplikasi dokumen.
 - Validasi NIK terhadap Dukcapil dan aturan penggantian paspor lama.
 - TLS/HTTPS (diasumsikan diterminasi di reverse proxy).
