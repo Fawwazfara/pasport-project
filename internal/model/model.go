@@ -41,3 +41,24 @@ type UploadResponse struct {
 	ContentType  string `json:"content_type"`
 	Size         int64  `json:"size"`
 }
+
+type RegisterRequest struct {
+	Username string `json:"username"`
+	Nama     string `json:"nama"`
+	Password string `json:"password"`
+}
+
+type LoginRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type ResetPasswordRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type UserResponse struct {
+	Username string `json:"username"`
+	Nama     string `json:"nama"`
+}

@@ -26,11 +26,114 @@
         <span class="brand-sub">Layanan Permohonan Paspor</span>
       </span>
     </div>
-    <span class="masthead-badge">Sistem Simulasi</span>
+    <div class="masthead-right">
+      <span class="masthead-badge">Sistem Simulasi</span>
+      <div class="user-area" id="userArea" hidden>
+        <span class="user-name" id="userName"></span>
+        <button type="button" id="logoutBtn" class="link">Keluar</button>
+      </div>
+    </div>
   </div>
 </header>
 
-<main class="wrap page">
+<main class="wrap page auth-page" id="authMain" hidden>
+  <p class="breadcrumb">Beranda &nbsp;/&nbsp; Reservasi Paspor</p>
+
+  <div class="panel auth-panel">
+    <section id="loginView" class="auth-view active">
+      <h2>Masuk</h2>
+      <p class="lead">Masuk untuk melanjutkan permohonan reservasi paspor.</p>
+      <form id="loginForm" novalidate>
+        <div class="form-group">
+          <label for="loginUsername">Username</label>
+          <input type="text" id="loginUsername" class="input" autocomplete="username" autocapitalize="none">
+          <span class="error" id="loginUsernameError"></span>
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">Kata Sandi</label>
+          <input type="password" id="loginPassword" class="input" autocomplete="current-password">
+          <span class="error" id="loginPasswordError"></span>
+        </div>
+        <span class="error" id="loginError"></span>
+        <div class="actions actions-end">
+          <button type="submit" id="loginBtn" class="btn btn-primary btn-block">Masuk</button>
+        </div>
+        <div class="auth-links">
+          <button type="button" class="link" data-goto="registerView">Belum punya akun? Daftar</button>
+          <button type="button" class="link" data-goto="resetView">Lupa kata sandi?</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="registerView" class="auth-view">
+      <h2>Daftar Akun</h2>
+      <p class="lead">Buat akun untuk mengajukan permohonan reservasi paspor.</p>
+      <form id="registerForm" novalidate>
+        <div class="form-group">
+          <label for="registerNama">Nama Lengkap</label>
+          <input type="text" id="registerNama" class="input" autocomplete="name">
+          <span class="error" id="registerNamaError"></span>
+        </div>
+        <div class="form-group">
+          <label for="registerUsername">Username</label>
+          <input type="text" id="registerUsername" class="input" autocomplete="username" autocapitalize="none">
+          <span class="hint">3-32 karakter: huruf, angka, titik, garis bawah, atau tanda hubung.</span>
+          <span class="error" id="registerUsernameError"></span>
+        </div>
+        <div class="form-group">
+          <label for="registerPassword">Kata Sandi</label>
+          <input type="password" id="registerPassword" class="input" autocomplete="new-password">
+          <span class="hint">Minimal 8 karakter.</span>
+          <span class="error" id="registerPasswordError"></span>
+        </div>
+        <div class="form-group">
+          <label for="registerConfirm">Ulangi Kata Sandi</label>
+          <input type="password" id="registerConfirm" class="input" autocomplete="new-password">
+          <span class="error" id="registerConfirmError"></span>
+        </div>
+        <span class="error" id="registerError"></span>
+        <div class="actions actions-end">
+          <button type="submit" id="registerBtn" class="btn btn-primary btn-block">Daftar</button>
+        </div>
+        <div class="auth-links">
+          <button type="button" class="link" data-goto="loginView">Sudah punya akun? Masuk</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="resetView" class="auth-view">
+      <h2>Atur Ulang Kata Sandi</h2>
+      <p class="lead">Masukkan username dan kata sandi baru. Prototype ini tidak mengirim surel, sehingga kata sandi langsung diganti.</p>
+      <form id="resetForm" novalidate>
+        <div class="form-group">
+          <label for="resetUsername">Username</label>
+          <input type="text" id="resetUsername" class="input" autocomplete="username" autocapitalize="none">
+          <span class="error" id="resetUsernameError"></span>
+        </div>
+        <div class="form-group">
+          <label for="resetPassword">Kata Sandi Baru</label>
+          <input type="password" id="resetPassword" class="input" autocomplete="new-password">
+          <span class="hint">Minimal 8 karakter.</span>
+          <span class="error" id="resetPasswordError"></span>
+        </div>
+        <div class="form-group">
+          <label for="resetConfirm">Ulangi Kata Sandi Baru</label>
+          <input type="password" id="resetConfirm" class="input" autocomplete="new-password">
+          <span class="error" id="resetConfirmError"></span>
+        </div>
+        <span class="error" id="resetError"></span>
+        <div class="actions actions-end">
+          <button type="submit" id="resetBtn" class="btn btn-primary btn-block">Simpan Kata Sandi Baru</button>
+        </div>
+        <div class="auth-links">
+          <button type="button" class="link" data-goto="loginView">Kembali ke halaman masuk</button>
+        </div>
+      </form>
+    </section>
+  </div>
+</main>
+
+<main class="wrap page" id="appMain" hidden>
   <p class="breadcrumb">Beranda &nbsp;/&nbsp; Reservasi Paspor</p>
 
   <ol class="stepper" id="stepper" aria-label="Tahapan permohonan">
