@@ -1,0 +1,6 @@
+.git
+bin/
+storage/
+Jenkinsfile
+docker-compose.yml
+README.md

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Prototype penelitian sistem reservasi paspor. Bukan layanan resmi.">
+<title>Reservasi Paspor — Prototype Penelitian</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wrap topbar-inner">
+    <span class="topbar-tag">Prototype penelitian</span>
+    <span class="topbar-note">Bukan layanan resmi</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap masthead-inner">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">RP</span>
+      <span class="brand-text">
+        <span class="brand-title">Reservasi Paspor</span>
+        <span class="brand-sub">Layanan Permohonan Paspor</span>
+      </span>
+    </div>
+    <span class="masthead-badge">Sistem Simulasi</span>
+  </div>
+</header>
+
+<main class="wrap page">
+  <p class="breadcrumb">Beranda &nbsp;/&nbsp; Reservasi Paspor</p>
+
+  <ol class="stepper" id="stepper" aria-label="Tahapan permohonan">
+    <li data-step="1"><span class="dot">1</span><span class="lbl">Kantor &amp; Jadwal</span></li>
+    <li data-step="2"><span class="dot">2</span><span class="lbl">Data Pemohon</span></li>
+    <li data-step="3"><span class="dot">3</span><span class="lbl">Unggah Dokumen</span></li>
+    <li data-step="4"><span class="dot">4</span><span class="lbl">Ringkasan</span></li>
+  </ol>
+
+  <div class="panel">
+
+    <section id="step1" class="step active">
+      <h2>1. Pilih Kantor dan Jadwal</h2>
+      <p class="lead">Tentukan kantor imigrasi dan tanggal kunjungan. Ketersediaan kuota ditampilkan secara langsung tanpa memuat ulang halaman.</p>
+
+      <div class="form-group">
+        <label for="kantor">Kantor Imigrasi</label>
+        <select id="kantor" class="select">
+          <option value="">-- Pilih kantor --</option>
+          <option value="Bandung">Bandung</option>
+          <option value="Jakarta Selatan">Jakarta Selatan</option>
+          <option value="Surabaya">Surabaya</option>
+          <option value="Yogyakarta">Yogyakarta</option>
+        </select>
+        <span class="error" id="kantorError"></span>
+      </div>
+
+      <div class="form-group">
+        <label for="tanggal">Tanggal Kunjungan</label>
+        <input type="date" id="tanggal" class="input">
+        <span class="hint">Tanggal hari ini atau setelahnya.</span>
+        <span class="error" id="tanggalError"></span>
+      </div>
+
+      <div class="form-group">
+        <span class="field-label">Sisa Kuota</span>
+        <p id="kuotaOutput" class="quota quota-neutral">Pilih kantor dan tanggal untuk melihat kuota.</p>
+      </div>
+
+      <div class="actions">
+        <button id="step1Btn" class="btn btn-primary btn-block">Lanjut</button>
+      </div>
+    </section>
+
+    <section id="step2" class="step">
+      <h2>2. Data Pemohon</h2>
+      <p class="lead">Lengkapi data pemohon sesuai dokumen kependudukan. Pastikan NIK terdiri dari 16 digit angka.</p>
+
+      <div class="form-group">
+        <label for="nama">Nama Lengkap</label>
+        <input type="text" id="nama" class="input" autocomplete="name">
+        <span class="error" id="namaError"></span>
+      </div>
+
+      <div class="form-group">
+        <label for="nik">NIK (16 digit angka)</label>
+        <input type="text" id="nik" class="input" inputmode="numeric" maxlength="16" autocomplete="off">
+        <span class="error" id="nikError"></span>
+      </div>
+
+      <div class="form-group">
+        <label for="jenisPassport">Jenis Paspor</label>
+        <select id="jenisPassport" class="select">
+          <option value="">-- Pilih --</option>
+          <option value="biasa">Biasa</option>
+          <option value="elektronik">Elektronik</option>
+        </select>
+        <span class="error" id="jenisPassportError"></span>
+      </div>
+
+      <div class="form-group">
+        <label for="masaBerlaku">Masa Berlaku (tahun)</label>
+        <select id="masaBerlaku" class="select">
+          <option value="">-- Pilih --</option>
+          <option value="5">5 tahun</option>
+          <option value="10">10 tahun</option>
+        </select>
+        <span class="error" id="masaBerlakuError"></span>
+      </div>
+
+      <div class="form-group">
+        <label class="checkbox-row" for="percepatan">
+          <input type="checkbox" id="percepatan" class="checkbox">
+          <span>Layanan percepatan (selesai pada hari yang sama) &mdash; tambahan Rp1.000.000</span>
+        </label>
+      </div>
+
+      <span class="error" id="step2Error"></span>
+
+      <div class="actions">
+        <button id="step2Back" class="btn btn-ghost">Kembali</button>
+        <button id="step2Btn" class="btn btn-primary">Lanjut</button>
+      </div>
+    </section>
+
+    <section id="step3" class="step">
+      <h2>3. Unggah Dokumen</h2>
+      <p class="lead">Unggah Kartu Tanda Penduduk (KTP), Kartu Keluarga (KK), dan satu dokumen pendukung (akta kelahiran, akta perkawinan, buku nikah, atau ijazah).</p>
+      <p class="hint">Format JPG, PNG, atau PDF. Ukuran maksimal 2 MB per berkas.</p>
+
+      <div class="form-group">
+        <label for="fileKtp">KTP</label>
+        <input type="file" id="fileKtp" class="input" accept=".jpg,.jpeg,.png,.pdf">
+        <span class="error" id="fileKtpError"></span>
+      </div>
+
+      <div class="form-group">
+        <label for="fileKk">Kartu Keluarga</label>
+        <input type="file" id="fileKk" class="input" accept=".jpg,.jpeg,.png,.pdf">
+        <span class="error" id="fileKkError"></span>
+      </div>
+
+      <div class="form-group">
+        <label for="fileSupp">Dokumen Pendukung</label>
+        <input type="file" id="fileSupp" class="input" accept=".jpg,.jpeg,.png,.pdf">
+        <span class="error" id="fileSuppError"></span>
+      </div>
+
+      <span class="error" id="step3Error"></span>
+
+      <div class="actions">
+        <button id="step3Btn" class="btn btn-primary btn-block">Selesai dan Lihat Ringkasan</button>
+      </div>
+    </section>
+
+    <section id="step4" class="step">
+      <h2>4. Ringkasan Permohonan</h2>
+      <p class="lead">Periksa kembali data di bawah ini. Tunjukkan kode booking atau kode billing saat datang ke kantor.</p>
+
+      <div id="summary" class="summary"></div>
+
+      <div class="actions">
+        <button id="step4Print" class="btn btn-ghost">Cetak Ringkasan</button>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <p>Prototype penelitian. Bukan layanan resmi Direktorat Jenderal Imigrasi.</p>
+    <p class="footer-note">Seluruh kantor, kuota, tarif, dan kode pada halaman ini bersifat simulasi dan tidak mewakili data sebenarnya.</p>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
